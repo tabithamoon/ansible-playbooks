@@ -1,0 +1,21 @@
+- name: Set up users
+  hosts: maine
+  tasks:
+    - name: Set up group for monitoring
+      become: true
+      ansible.builtin.group:
+        name: monitoring
+        state: present
+        gid: 201
+        system: true
+
+    - name: Set up user for monitoring
+      become: true
+      ansible.builtin.user:
+        name: monitoring
+        state: present
+        uid: 201
+        group: 201
+        system: true
+        create_home: false
+        home: /nonexistant
