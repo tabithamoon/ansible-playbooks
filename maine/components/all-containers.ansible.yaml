@@ -1,0 +1,5 @@
+- name: Start all containers
+  hosts: maine
+  tasks:
+    - name: Nextcloud
+      ansible.builtin.import_tasks: containers/nextcloud.ansible.yaml

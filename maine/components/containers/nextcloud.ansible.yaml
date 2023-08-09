@@ -1,0 +1,109 @@
+- name: Check if Nextcloud files subvolume exists in cold storage
+  become: true
+  ansible.builtin.stat:
+    path: /mnt/cold/Nextcloud
+  register: stat_result
+
+- name: Create Nextcloud files subvolume
+  become: true
+  ansible.builtin.command: btrfs subvol create '/mnt/cold/Nextcloud'
+  when: not stat_result.stat.exists
+
+- name: Set ownership for Nextcloud files subvolume
+  become: true
+  ansible.builtin.file:
+    path: /mnt/cold/Nextcloud
+    owner: nextcloud
+    group: nextcloud
+    mode: '0700'
+    recurse: true
+
+- name: Check if Nextcloud container subvolume exists
+  become: true
+  ansible.builtin.stat:
+    path: /opt/podman/nextcloud
+  register: stat_result
+
+- name: Create Nextcloud container subvolume
+  become: true
+  ansible.builtin.command: btrfs subvol create '/opt/podman/nextcloud'
+  when: not stat_result.stat.exists
+
+- name: Set ownership for Nextcloud container subvolume
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/nextcloud
+    owner: nextcloud
+    group: nextcloud
+    recurse: true
+    mode: '0700'
+
+- name: Create Nextcloud container data folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/nextcloud/server
+    owner: nextcloud
+    group: nextcloud
+    state: directory
+    mode: '0700'
+
+- name: Create Nextcloud database data folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/nextcloud/database
+    owner: nextcloud
+    group: nextcloud
+    state: directory
+    mode: '0700'
+
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+  with_items:
+    - lscr.io/linuxserver/nextcloud:latest
+    - docker.io/mariadb:11
+
+- name: Remove existing containers
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - nextcloud-server
+    - nextcloud-database
+
+- name: Ensure Nextcloud network is present
+  become: true
+  containers.podman.podman_network:
+    name: nextcloud
+    subnet: 172.24.1.0/24
+    gateway: 172.24.1.1
+    disable_dns: false
+
+- name: Start Nextcloud database container
+  become: true
+  containers.podman.podman_container:
+    image: docker.io/mariadb:11
+    name: nextcloud-database
+    network: nextcloud
+    state: started
+    user: 202:202
+    volume:
+      - /opt/podman/nextcloud/database/config:/etc/mysql/conf.d
+      - /opt/podman/nextcloud/database/data:/var/lib/mysql
+
+- name: Start Nextcloud server container
+  become: true
+  containers.podman.podman_container:
+    image: lscr.io/linuxserver/nextcloud:latest
+    name: nextcloud-server
+    network: nextcloud
+    state: started
+    volume:
+      - /opt/podman/nextcloud/server/config:/config
+      - /mnt/cold/Nextcloud:/data
+    env:
+      TZ: America/Sao_Paulo
+      PGID: 202
+      PUID: 202

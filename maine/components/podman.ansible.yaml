@@ -1,0 +1,30 @@
+- name: Configure podman
+  hosts: maine
+  tasks:
+    - name: Check if podman config is present
+      ansible.builtin.stat:
+        path: /etc/containers/containers.conf
+      register: stat_result
+
+    - name: Copy default config if file missing
+      become: true
+      ansible.builtin.copy:
+        remote_src: true
+        src: /usr/share/containers/containers.conf
+        dest: /etc/containers/containers.conf
+      when: not stat_result.stat.exists
+
+    - name: Create default network
+      become: true
+      containers.podman.podman_network:
+        name: netmain
+        subnet: 172.24.0.0/24
+        gateway: 172.24.0.1
+        disable_dns: false
+
+    - name: Set podman default network
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/containers/containers.conf
+        line: 'default_network = "netmain"'
+        regex: '#default_network = "podman"'

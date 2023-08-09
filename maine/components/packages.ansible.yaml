@@ -1,0 +1,53 @@
+- name: Install packages for maine
+  hosts: maine
+  tasks:
+    - name: Update caches and ensure gpg is installed
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        pkg: gpg
+
+    - name: Add XanMod signing key
+      become: true
+      ansible.builtin.apt_key:
+        url: https://dl.xanmod.org/archive.key
+        state: present
+
+    - name: Add XanMod repo
+      become: true
+      ansible.builtin.apt_repository:
+        repo: deb http://deb.xanmod.org releases main
+        state: present
+
+    - name: Install packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        state: present
+        pkg:
+          - linux-xanmod-lts-x64v3
+          - libvirt-daemon-system
+          - netavark
+          - podman
+          - rclone
+          - ncat
+          - fish
+          - ovmf
+
+    - name: Remove stock Linux kernel
+      become: true
+      ansible.builtin.apt:
+        state: absent
+        pkg:
+          - linux-image-6.1.0*
+          - linux-image-amd64
+
+    - name: Autoremove packages
+      become: true
+      ansible.builtin.apt:
+        autoremove: true
+
+    - name: Clean apt
+      become: true
+      ansible.builtin.apt:
+        clean: true
