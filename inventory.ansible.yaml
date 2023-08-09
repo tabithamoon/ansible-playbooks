@@ -1,0 +1,4 @@
+all:
+  hosts:
+    maine:
+      ansible_host: 100.75.217.79
