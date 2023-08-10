@@ -1,0 +1,20 @@
+(dnscert) {
+        tls {
+                dns cloudflare {env.CF_API_TOKEN}
+        }
+}
+
+cloud.tabbynet.com {
+        import dnscert
+        reverse_proxy * {
+                to https://nextcloud-server
+                transport http {
+                        tls_insecure_skip_verify
+                }
+        }
+}
+
+jellyfin.tabbynet.com {
+        import dnscert
+        reverse_proxy jellyfin-server:9000
+}

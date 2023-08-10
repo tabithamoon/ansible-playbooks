@@ -1,5 +1,15 @@
 - name: Start all containers
   hosts: maine
+  vars_prompt:
+    - name: cftuntoken
+      prompt: Cloudflare Tunnels token for maine
+      private: false
+    - name: cfapitoken
+      prompt: Cloudflare API token for maine
+      private: false
+
   tasks:
     - name: Nextcloud
       ansible.builtin.import_tasks: containers/nextcloud.ansible.yaml
+    - name: Proxies
+      ansible.builtin.import_tasks: containers/proxies.ansible.yaml

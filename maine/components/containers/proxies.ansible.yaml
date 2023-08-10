@@ -1,0 +1,141 @@
+- name: Check if proxies container subvolume exists
+  become: true
+  ansible.builtin.stat:
+    path: /opt/podman/proxies
+  register: stat_result
+
+- name: Create proxies container subvolume
+  become: true
+  ansible.builtin.command: btrfs subvol create '/opt/podman/proxies'
+  when: not stat_result.stat.exists
+
+- name: Set ownership for proxies container subvolume
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/proxies
+    owner: proxies
+    group: proxies
+    recurse: true
+    mode: '0700'
+
+- name: Create caddy folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/proxies/caddy
+    owner: proxies
+    group: proxies
+    state: directory
+    mode: '0700'
+
+- name: Create caddy config folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/proxies/caddy/config
+    owner: proxies
+    group: proxies
+    state: directory
+    mode: '0700'
+
+- name: Create caddy data folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/proxies/caddy/data
+    owner: proxies
+    group: proxies
+    state: directory
+    mode: '0700'
+
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+    pull: true
+  with_items:
+    - docker.io/cloudflare/cloudflared:latest
+    - docker.io/caddy:2.7.2-builder-alpine
+    - docker.io/caddy:2.7.2-alpine
+
+- name: Copy Caddyfile
+  become: true
+  ansible.builtin.copy:
+    src: proxies/Caddyfile
+    dest: /opt/podman/proxies/caddy/
+    owner: proxies
+    group: proxies
+    mode: '0700'
+
+- name: Copy Dockerfile
+  become: true
+  ansible.builtin.copy:
+    src: proxies/Dockerfile
+    dest: /opt/podman/proxies/caddy/
+    owner: proxies
+    group: proxies
+    mode: '0700'
+
+- name: Build custom Caddy image
+  become: true
+  ansible.builtin.podman_image:
+    name: caddy-custom-cfdns
+    path: /opt/podman/proxies/caddy
+
+- name: Stop existing containers
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - proxies-cloudflared
+    - proxies-caddy
+
+- name: Ensure main network is present
+  become: true
+  containers.podman.podman_network:
+    name: netmain
+    subnet: 172.24.0.0/24
+    gateway: 172.24.0.1
+    disable_dns: false
+
+- name: Ensure Nextcloud network is present
+  become: true
+  containers.podman.podman_network:
+    name: nextcloud
+    subnet: 172.24.1.0/24
+    gateway: 172.24.1.1
+    disable_dns: false
+
+- name: Start cloudflared container
+  become: true
+  containers.podman.podman_container:
+    image: docker.io/cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    name: proxies-cloudflared
+    restart_policy: always
+    state: started
+    user: 200:200
+    network:
+      - netmain
+      - nextcloud
+    env:
+      TUNNEL_TOKEN: "{{ cftuntoken }}"
+
+- name: Start caddy container
+  become: true
+  containers.podman.podman_container:
+    image: caddy-custom-cfdns
+    restart_policy: always
+    name: proxies-caddy
+    state: started
+    user: 200:200
+    network:
+      - netmain
+      - nextcloud
+    env:
+      CF_API_TOKEN: "{{ cfapitoken }}"
+    volume:
+      - /opt/podman/proxies/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/podman/proxies/caddy/config:/config
+      - /opt/podman/proxies/caddy/data:/data
+    publish:
+      - 443:443
+      - 80:80
