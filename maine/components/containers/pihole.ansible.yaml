@@ -1,0 +1,70 @@
+- name: Check if pihole container subvolume exists
+  become: true
+  ansible.builtin.stat:
+    path: /opt/podman/pihole
+  register: stat_result
+
+- name: Create pihole container subvolume
+  when: not stat_result.stat.exists
+  become: true
+  ansible.builtin.command: btrfs subvol create '/opt/podman/pihole'
+
+- name: Set ownership for pihole container subvolume
+  when: not stat_result.stat.exists
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/pihole
+    owner: root
+    group: root
+    recurse: true
+
+- name: Create pihole config folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/pihole/config
+    owner: root
+    group: root
+    state: directory
+
+- name: Create pihole dnsmasq folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/pihole/dnsmasq
+    owner: root
+    group: root
+    state: directory
+
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+    pull: true
+  with_items:
+    - docker.io/pihole/pihole:latest
+
+- name: Stop existing container
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - pihole
+
+- name: Start pihole container
+  become: true
+  containers.podman.podman_container:
+    image: docker.io/pihole/pihole:latest
+    restart_policy: always
+    state: started
+    network: host
+    name: pihole
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    env:
+      TZ: America/Sao_Paulo
+      WEB_PORT: 9000
+      INTERFACE: vmbr0
+    volume:
+      - /opt/podman/pihole/dnsmasq:/etc/dnsmasq.d
+      - /opt/podman/pihole/config:/etc/pihole

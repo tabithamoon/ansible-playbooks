@@ -9,6 +9,8 @@
       private: false
 
   tasks:
+    - name: Pihole
+      ansible.builtin.import_tasks: containers/pihole.ansible.yaml
     - name: Nextcloud
       ansible.builtin.import_tasks: containers/nextcloud.ansible.yaml
     - name: Proxies
