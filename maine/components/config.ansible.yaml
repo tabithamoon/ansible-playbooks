@@ -1,0 +1,33 @@
+- name: Copy and edit configuration files
+  gather_facts: false
+  hosts: maine
+  tasks:
+    - name: Allow microcode to be updated
+      become: true
+      ansible.builtin.file:
+        path: /etc/modprobe.d/amd64-microcode-blacklist.conf
+        state: absent
+
+    - name: Copy modprobe file
+      become: true
+      ansible.builtin.copy:
+        src: configs/ansible-modprobe.conf
+        dest: /etc/modprobe.d/ansible-modprobe.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Set grub kernel command line
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line: 'GRUB_CMDLINE_LINUX="amd_iommu=on iommu=pt isolcpus=2-7,10-15 nohz_full=2-7,10-15 pcie_acs_override=downstream,multifunction"'
+        regex: 'GRUB_CMDLINE_LINUX=""'
+      notify: Update grub configuration
+
+  handlers:
+    - name: Update grub configuration
+      become: true
+      ansible.builtin.command: update-grub
+      changed_when: grub_update.rc == 0
+      register: grub_update

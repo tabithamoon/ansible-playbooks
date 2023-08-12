@@ -1,0 +1,11 @@
+[Unit]
+Description=Unbind devices for PCI passthrough
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/scripts/unbind-devices.sh
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target

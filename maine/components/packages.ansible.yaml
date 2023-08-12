@@ -1,4 +1,5 @@
 - name: Install packages for maine
+  gather_facts: false
   hosts: maine
   tasks:
     - name: Update caches and ensure gpg is installed
@@ -27,6 +28,7 @@
         pkg:
           - linux-xanmod-lts-x64v3
           - libvirt-daemon-system
+          - nfs-kernel-server
           - netavark
           - podman
           - rclone

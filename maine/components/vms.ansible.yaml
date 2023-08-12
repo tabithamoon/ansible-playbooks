@@ -1,0 +1,35 @@
+- name: Define virtual machines
+  gather_facts: false
+  hosts: maine
+  tasks:
+    - name: Copy virtual machine hook files
+      become: true
+      ansible.builtin.copy:
+        src: scripts/vm-hooks/
+        dest: /etc/libvirt/hooks
+        mode: '0755'
+    - name: Copy VM definition files
+      become: true
+      ansible.builtin.copy:
+        src: virtual-machines/
+        dest: /opt/virtual_machines
+        mode: '0755'
+    - name: Get all VM definition files
+      become: true
+      ansible.builtin.find:
+        paths: /opt/virtual_machines
+        patterns: '*.xml'
+      register: vmdefs
+    - name: Define virtual machines
+      become: true
+      ansible.builtin.command:
+        cmd: "virsh define {{ item.path | basename }}"
+        chdir: /opt/virtual_machines
+      changed_when: virsh_return.rc == 0
+      with_items: "{{ vmdefs.files }}"
+      register: virsh_return
+    - name: Restart libvirtd
+      become: true
+      ansible.builtin.systemd_service:
+        name: libvirtd.service
+        state: restarted

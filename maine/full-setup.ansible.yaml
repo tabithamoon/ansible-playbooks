@@ -1,8 +1,16 @@
-- name: Install packages
-  ansible.builtin.import_playbook: components/packages.ansible.yaml
-- name: Create users
-  ansible.builtin.import_playbook: components/users.ansible.yaml
-- name: Configure podman
-  ansible.builtin.import_playbook: components/podman.ansible.yaml
-- name: Start containers
-  ansible.builtin.import_playbook: components/all-containers.ansible.yaml
+# - name: Install packages
+#   ansible.builtin.import_playbook: components/packages.ansible.yaml
+# - name: Set configs
+#   ansible.builtin.import_playbook: components/config.ansible.yaml
+# - name: Copy scripts
+#   ansible.builtin.import_playbook: components/scripts.ansible.yaml
+# - name: Copy services
+#   ansible.builtin.import_playbook: components/services.ansible.yaml
+- name: Register virtual machines
+  ansible.builtin.import_playbook: components/vms.ansible.yaml
+# - name: Create users
+#   ansible.builtin.import_playbook: components/users.ansible.yaml
+# - name: Configure podman
+#   ansible.builtin.import_playbook: components/podman.ansible.yaml
+# - name: Start containers
+#   ansible.builtin.import_playbook: components/all-containers.ansible.yaml

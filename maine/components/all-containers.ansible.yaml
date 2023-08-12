@@ -1,4 +1,5 @@
 - name: Start all containers
+  gather_facts: false
   hosts: maine
   vars_prompt:
     - name: cftuntoken

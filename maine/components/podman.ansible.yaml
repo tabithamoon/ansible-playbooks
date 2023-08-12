@@ -1,4 +1,5 @@
 - name: Configure podman
+  gather_facts: false
   hosts: maine
   tasks:
     - name: Check if podman config is present

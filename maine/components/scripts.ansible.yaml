@@ -1,0 +1,21 @@
+- name: Set up scripts
+  gather_facts: false
+  hosts: maine
+  tasks:
+    - name: Create scripts directory
+      become: true
+      ansible.builtin.file:
+        path: /opt/scripts
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy unbind-devices.sh
+      become: true
+      ansible.builtin.copy:
+        src: scripts/unbind-devices.sh
+        dest: /opt/scripts/unbind-devices.sh
+        owner: root
+        group: root
+        mode: '0744'
