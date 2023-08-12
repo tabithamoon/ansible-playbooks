@@ -16,3 +16,5 @@
       ansible.builtin.import_tasks: containers/nextcloud.ansible.yaml
     - name: Proxies
       ansible.builtin.import_tasks: containers/proxies.ansible.yaml
+    - name: Jellyfin
+      ansible.builtin.import_tasks: containers/jellyfin.ansible.yaml

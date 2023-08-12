@@ -55,6 +55,32 @@
         create_home: false
         home: /nonexistant
 
+    - name: Set up group for Jellyfin
+      become: true
+      ansible.builtin.group:
+        name: jellyfin
+        state: present
+        gid: 203
+        system: true
+    - name: Set up user for Jellyfin
+      become: true
+      ansible.builtin.user:
+        name: jellyfin
+        state: present
+        uid: 203
+        group: 203
+        system: true
+        create_home: false
+        home: /nonexistant
+
+    - name: Add Jellyfin to render group
+      become: true
+      ansible.builtin.user:
+        name: jellyfin
+        append: true
+        groups:
+          - render
+
     - name: Add tabby to libvirt group
       become: true
       ansible.builtin.user:

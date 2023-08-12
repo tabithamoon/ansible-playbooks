@@ -1,0 +1,117 @@
+- name: Check if media subvolume exists in cold storage
+  become: true
+  ansible.builtin.stat:
+    path: /mnt/cold/Media
+  register: stat_result
+
+- name: Create media subvolume on cold
+  become: true
+  ansible.builtin.command: btrfs subvol create '/mnt/cold/Media'
+  when: not stat_result.stat.exists
+  register: subvol_return
+  changed_when: subvol_return.rc == 0
+
+- name: Set ownership for media subvolume on cold
+  become: true
+  ansible.builtin.file:
+    path: /mnt/cold/Media
+    owner: jellyfin
+    group: jellyfin
+    mode: '0755'
+    recurse: true
+
+- name: Check if media subvolume exists in glacial storage
+  become: true
+  ansible.builtin.stat:
+    path: /mnt/glacial/Media
+  register: stat_result
+
+- name: Create media subvolume on glacial
+  become: true
+  ansible.builtin.command: btrfs subvol create '/mnt/glacial/Media'
+  when: not stat_result.stat.exists
+  register: subvol_return
+  changed_when: subvol_return.rc == 0
+
+- name: Set ownership for media subvolume on glacial
+  become: true
+  ansible.builtin.file:
+    path: /mnt/glacial/Media
+    owner: jellyfin
+    group: jellyfin
+    mode: '0755'
+    recurse: true
+
+- name: Check if Jellyfin container subvolume exists
+  become: true
+  ansible.builtin.stat:
+    path: /opt/podman/jellyfin
+  register: stat_result
+
+- name: Create Jellyfin container subvolume
+  become: true
+  ansible.builtin.command: btrfs subvol create '/opt/podman/jellyfin'
+  when: not stat_result.stat.exists
+  register: subvol_return
+  changed_when: subvol_return.rc == 0
+
+- name: Set ownership for Jellyfin container subvolume
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/jellyfin
+    owner: jellyfin
+    group: jellyfin
+    recurse: true
+    mode: '0700'
+
+- name: Create Jellyfin config folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/jellyfin/config
+    owner: jellyfin
+    group: jellyfin
+    state: directory
+    mode: '0700'
+
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+  with_items:
+    - lscr.io/linuxserver/jellyfin:10.8.10
+
+- name: Remove existing containers
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - jellyfin-server
+
+- name: Ensure Nextcloud network is present
+  become: true
+  containers.podman.podman_network:
+    name: netmain
+    subnet: 172.24.0.0/24
+    gateway: 172.24.0.1
+    disable_dns: false
+
+- name: Start Jellyfin container
+  become: true
+  containers.podman.podman_container:
+    image: lscr.io/linuxserver/jellyfin:10.8.10
+    name: jellyfin-server
+    network: netmain
+    state: started
+    memory: 2g
+    device:
+      - /dev/dri:/dev/dri
+    volume:
+      - /opt/podman/jellyfin/config:/config
+      - /mnt/glacial/Media:/glacial
+      - /mnt/cold/Media:/cold
+    env:
+      JELLYFIN_PublishedServerUrl: jellyfin.tabbynet.com
+      TZ: America/Sao_Paulo
+      PGID: 203
+      PUID: 203

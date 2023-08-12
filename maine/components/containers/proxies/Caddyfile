@@ -16,5 +16,5 @@ cloud.tabbynet.com {
 
 jellyfin.tabbynet.com {
         import dnscert
-        reverse_proxy jellyfin-server:9000
+        reverse_proxy jellyfin-server:8096
 }
