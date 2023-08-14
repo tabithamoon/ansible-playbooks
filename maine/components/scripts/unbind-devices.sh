@@ -1,4 +1,4 @@
-# Wait a while to avoid any race conditions
+# Wait a while to avoid any race conditions during startup
 sleep 20
 
 # Unbind devices
@@ -24,3 +24,10 @@ sleep 1
 
 # Load AMD GPU driver for integrated graphics
 modprobe amdgpu
+
+# You know what they say, ya snooze you lose
+sleep 1
+
+# Start podman containers *after* driver shuffle dance, to avoid
+# starting Jellyfin before /dev/dri/renderD128 is available
+podman start --all
