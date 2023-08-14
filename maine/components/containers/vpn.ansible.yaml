@@ -1,0 +1,55 @@
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+    pull: true
+  with_items:
+    - docker.io/qmcgaw/gluetun:latest
+
+- name: Stop existing container (and dependencies)
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - torrents-qbittorrent
+    - torrents-prowlarr
+    - torrents-radarr
+    - gluetun
+
+- name: Get WireGuard config
+  become: true
+  ansible.builtin.fetch:
+    src: /root/mullvad.conf
+    dest: /tmp/
+    flat: true
+
+- name: Store WireGuard parameters
+  ansible.builtin.set_fact:
+    wgkey: "{{ lookup('ansible.builtin.ini', 'PrivateKey', section='Interface', file='/tmp/mullvad.conf') }}"
+    wgaddr: "{{ lookup('ansible.builtin.ini', 'Address', section='Interface', file='/tmp/mullvad.conf') | split(',') | first }}"
+
+- name: Delete config file from local machine
+  delegate_to: 127.0.0.1
+  ansible.builtin.file:
+    path: '/tmp/mullvad.conf'
+    state: absent
+
+- name: Start gluetun container
+  become: true
+  containers.podman.podman_container:
+    image: docker.io/qmcgaw/gluetun:latest
+    restart_policy: unless-stopped
+    device: /dev/net/tun
+    network: netmain
+    state: started
+    name: gluetun
+    cap_add:
+      - NET_ADMIN
+    env:
+      WIREGUARD_PRIVATE_KEY: "{{ wgkey }}"
+      WIREGUARD_ADDRESSES: "{{ wgaddr }}"
+      VPN_SERVICE_PROVIDER: mullvad
+      SERVER_CITIES: Sao Paulo
+      TZ: America/Sao_Paulo
+      VPN_TYPE: wireguard

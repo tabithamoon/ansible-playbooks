@@ -1,0 +1,118 @@
+- name: Check if torrent containers subvolume exists
+  become: true
+  ansible.builtin.stat:
+    path: /opt/podman/torrents
+  register: stat_result
+
+- name: Create torrent containers subvolume
+  become: true
+  ansible.builtin.command: btrfs subvol create '/opt/podman/torrents'
+  when: not stat_result.stat.exists
+
+- name: Set ownership for torrent containers subvolume
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/torrents
+    owner: torrents
+    group: torrents
+    recurse: true
+    mode: '0700'
+
+- name: Create qBittorrent folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/torrents/qbittorrent
+    state: directory
+    owner: torrents
+    group: torrents
+    recurse: true
+    mode: '0700'
+
+- name: Create Prowlarr folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/torrents/prowlarr
+    state: directory
+    owner: torrents
+    group: torrents
+    recurse: true
+    mode: '0700'
+
+- name: Create Radarr folder
+  become: true
+  ansible.builtin.file:
+    path: /opt/podman/torrents/radarr
+    state: directory
+    owner: torrents
+    group: torrents
+    recurse: true
+    mode: '0700'
+
+- name: Pull container images
+  become: true
+  ansible.builtin.podman_image:
+    name: "{{ item }}"
+    pull: true
+  with_items:
+    - lscr.io/linuxserver/qbittorrent:latest
+    - lscr.io/linuxserver/prowlarr:latest
+    - lscr.io/linuxserver/radarr:latest
+
+- name: Stop existing container
+  become: true
+  containers.podman.podman_container:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - torrents-qbittorrent
+    - torrents-prowlarr
+    - torrents-radarr
+
+- name: Start qBittorrent container
+  become: true
+  containers.podman.podman_container:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    restart_policy: unless-stopped
+    network: container:gluetun
+    name: torrents-qbittorrent
+    state: started
+    env:
+      TZ: America/Sao_Paulo
+      PUID: 204
+      PGID: 204
+    volume:
+      - /opt/podman/torrents/qbittorrent:/config
+      - /mnt/hot/Torrents:/downloads
+
+- name: Start Prowlarr container
+  become: true
+  containers.podman.podman_container:
+    image: lscr.io/linuxserver/prowlarr:latest
+    restart_policy: unless-stopped
+    network: container:gluetun
+    name: torrents-prowlarr
+    state: started
+    env:
+      TZ: America/Sao_Paulo
+      PUID: 204
+      PGID: 204
+    volume:
+      - /opt/podman/torrents/prowlarr:/config
+
+- name: Start Radarr container
+  become: true
+  containers.podman.podman_container:
+    image: lscr.io/linuxserver/radarr:latest
+    restart_policy: unless-stopped
+    network: container:gluetun
+    name: torrents-radarr
+    state: started
+    env:
+      TZ: America/Sao_Paulo
+      PUID: 204
+      PGID: 204
+    volume:
+      - /opt/podman/torrents/radarr:/config
+      - /mnt/glacial/Media/Movies:/glacial
+      - /mnt/cold/Media/Movies:/cold
+      - /mnt/hot/Torrents:/downloads

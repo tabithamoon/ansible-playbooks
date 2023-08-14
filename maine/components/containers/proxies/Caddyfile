@@ -14,6 +14,25 @@ cloud.tabbynet.com {
         }
 }
 
+*.internal.tabbynet.com {
+        import dnscert
+        
+        @qbittorrent host qbittorrent.internal.tabbynet.com
+        handle @qbittorrent {
+                reverse_proxy gluetun:8080
+        }
+
+        @prowlarr host prowlarr.internal.tabbynet.com
+        handle @prowlarr {
+                reverse_proxy gluetun:9696
+        }
+
+        @radarr host radarr.internal.tabbynet.com
+        handle @radarr {
+                reverse_proxy gluetun:7878
+        }
+}
+
 jellyfin.tabbynet.com {
         import dnscert
         reverse_proxy jellyfin-server:8096

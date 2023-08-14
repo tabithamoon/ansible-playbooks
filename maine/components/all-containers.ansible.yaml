@@ -18,3 +18,7 @@
       ansible.builtin.import_tasks: containers/proxies.ansible.yaml
     - name: Jellyfin
       ansible.builtin.import_tasks: containers/jellyfin.ansible.yaml
+    - name: Gluetun
+      ansible.builtin.import_tasks: containers/vpn.ansible.yaml
+    - name: Torrents
+      ansible.builtin.import_tasks: containers/torrents.ansible.yaml

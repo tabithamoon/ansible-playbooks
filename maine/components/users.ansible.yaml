@@ -73,6 +73,24 @@
         create_home: false
         home: /nonexistant
 
+    - name: Set up group for Torrents
+      become: true
+      ansible.builtin.group:
+        name: torrents
+        state: present
+        gid: 204
+        system: true
+    - name: Set up user for Torrents
+      become: true
+      ansible.builtin.user:
+        name: torrents
+        state: present
+        uid: 204
+        group: 204
+        system: true
+        create_home: false
+        home: /nonexistant
+
     - name: Add Jellyfin to render group
       become: true
       ansible.builtin.user:
