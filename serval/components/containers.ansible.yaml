@@ -1,0 +1,23 @@
+- name: Set up and start containers
+  gather_facts: false
+  hosts: serval
+  tasks:
+    - name: Configure networking
+      become: true
+      ansible.builtin.import_tasks: ./docker/networking.ansible.yaml
+    - name: Copy data
+      become: true
+      ansible.builtin.import_tasks: ./docker/copy-data.ansible.yaml
+    - name: Find all container folders
+      become: true
+      ansible.builtin.find:
+        path: /opt/docker
+        file_type: directory
+      register: container_dirs
+    - name: Start containers
+      become: true
+      ansible.builtin.command:
+        cmd: docker compose up -d --pull all --force-recreate
+        chdir: "{{ item.path }}"
+      with_items: "{{ container_dirs.files }}"
+      changed_when: true

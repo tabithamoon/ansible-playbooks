@@ -1,0 +1,18 @@
+version: "3"
+services:
+  vaultwarden:
+    image: docker.io/vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    user: 203:203
+    environment:
+      ADMIN_TOKEN: "$$argon2id$$v=19$$m=65540,t=3,p=4$$8tUWFocqWEq0W5esRfEEmNcW6Qbhog0tSJAx4ij8RwM$$nOMXPizClK6OKwQ3169EiXkP2quxEoA+ifYl5LKXdtw"
+      TZ: America/Sao_Paulo
+      ROCKET_PORT: 3000
+    volumes:
+      - ./data:/data
+
+networks:
+  default:
+    name: vaultwarden
+    external: true

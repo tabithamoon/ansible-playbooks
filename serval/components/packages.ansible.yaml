@@ -1,0 +1,40 @@
+- name: Install packages
+  gather_facts: false
+  hosts: serval
+  tasks:
+    - name: Update caches and ensure gpg is installed
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        pkg: gpg
+
+    - name: Install packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        state: present
+        pkg:
+          - nfs-kernel-server
+          - rclone
+          - ncat
+          - fish
+          - htop
+          - btop
+          - ovmf
+
+    - name: Install Docker
+      become: true
+      ansible.builtin.import_tasks: ../../shared/install-docker-deb.ansible.yaml
+      vars:
+        distro: debian
+        version: bookworm
+
+    - name: Autoremove packages
+      become: true
+      ansible.builtin.apt:
+        autoremove: true
+
+    - name: Clean apt
+      become: true
+      ansible.builtin.apt:
+        clean: true

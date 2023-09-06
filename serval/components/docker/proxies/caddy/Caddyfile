@@ -1,0 +1,10 @@
+(dnscert) {
+        tls {
+                dns cloudflare {env.CF_API_TOKEN}
+        }
+}
+
+vault.tabbynet.com {
+        import dnscert
+        reverse_proxy vaultwarden:3000
+}

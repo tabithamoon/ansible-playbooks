@@ -1,0 +1,8 @@
+- name: Create users
+  ansible.builtin.import_playbook: './components/users.ansible.yaml'
+# - name: Install software
+#   ansible.builtin.import_playbook: './components/packages.ansible.yaml'
+# - name: Set up Docker
+#   ansible.builtin.import_playbook: './components/docker.ansible.yaml'
+- name: Start containers
+  ansible.builtin.import_playbook: components/containers.ansible.yaml

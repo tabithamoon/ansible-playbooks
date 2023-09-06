@@ -3,3 +3,6 @@ all:
     maine:
       ansible_host: 100.75.217.79
       ansible_user: tabby
+    serval:
+      ansible_host: 100.101.205.52
+      ansible_user: tabby

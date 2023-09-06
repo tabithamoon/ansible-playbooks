@@ -1,0 +1,25 @@
+- name: Set up users
+  hosts: serval
+  tasks:
+    - name: Set Docker daemon bridge IP
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          {
+            "bip": "172.24.255.1/24"
+          }
+
+    - name: Enable and start Docker
+      become: true
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        state: restarted
+        enabled: true
+        name: "{{ item }}"
+      with_items:
+        - docker.service
+        - docker.socket

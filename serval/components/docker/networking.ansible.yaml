@@ -1,0 +1,13 @@
+- name: Create netmain network
+  community.docker.docker_network:
+    name: netmain
+    ipam_config:
+      - subnet: 172.24.0.0/24
+        gateway: 172.24.0.1
+
+- name: Create vaultwarden network
+  community.docker.docker_network:
+    name: vaultwarden
+    ipam_config:
+      - subnet: 172.24.1.0/24
+        gateway: 172.24.1.1

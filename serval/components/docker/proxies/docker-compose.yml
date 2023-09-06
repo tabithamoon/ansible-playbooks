@@ -1,0 +1,43 @@
+version: "3"
+services:
+  cloudflared:
+    image: docker.io/cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    container_name: cloudflared
+    env_file: ./cloudflared.env
+    restart: always
+    user: 200:200
+    networks:
+      - vaultwarden
+      - tabbynet
+      - netmain
+
+  caddy:
+    container_name: caddy
+    env_file: ./caddy.env
+    restart: always
+    build: ./caddy
+    user: 200:200
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/config:/config
+      - ./caddy/data:/data
+    ports:
+      - 100.101.205.52:443:443/udp
+      - 100.101.205.52:443:443
+      - 100.101.205.52:80:80
+    networks:
+      - vaultwarden
+      - tabbynet
+      - netmain
+
+networks:
+  netmain:
+    name: netmain
+    external: true
+  tabbynet:
+    name: tabbynet
+    external: true
+  vaultwarden:
+    name: vaultwarden
+    external: true

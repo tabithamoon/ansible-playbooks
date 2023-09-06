@@ -1,0 +1,36 @@
+- name: Stop docker containers
+  ansible.builtin.shell: docker stop $(docker ps -a -q)
+  args:
+    executable: /bin/bash
+  register: container_stop
+  failed_when: container_stop.rc != 0 and not container_stop.stderr is search("requires at least 1 argument")
+
+- name: Copy docker data
+  ansible.builtin.copy:
+    src: docker
+    dest: /opt/
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Set permissions for proxies
+  ansible.builtin.shell: |
+    chown -R proxies:proxies "/opt/docker/proxies/{{ item }}"
+    chmod -R 0700 "/opt/docker/proxies/{{ item }}"
+  with_items:
+    - caddy
+
+- name: Set permissions for vaultwarden
+  ansible.builtin.shell: |
+    chown -R vaultwarden:vaultwarden "/opt/docker/vaultwarden/{{ item }}"
+    chmod -R 0700 "/opt/docker/vaultwarden/{{ item }}"
+  with_items:
+    - config.json
+    - data
+
+- name: Set permissions for jellyseerr
+  ansible.builtin.shell: |
+    chown -R jellyseerr:jellyseerr "/opt/docker/jellyseerr/{{ item }}"
+    chmod -R 0700 "/opt/docker/jellyseerr/{{ item }}"
+  with_items:
+    - config

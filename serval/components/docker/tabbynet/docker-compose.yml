@@ -1,0 +1,12 @@
+version: "3"
+services:
+  tabbynet:
+    image: docker.io/tabithamoon/tabbynet:latest
+    container_name: tabbynet
+    restart: unless-stopped
+    user: 202:202
+
+networks:
+  default:
+    name: tabbynet
+    external: true

@@ -1,0 +1,93 @@
+- name: Create users
+  gather_facts: false
+  hosts: serval
+  tasks:
+    - name: Set up group for proxies
+      become: true
+      ansible.builtin.group:
+        name: proxies
+        state: present
+        gid: 200
+        system: true
+    - name: Set up user for proxies
+      become: true
+      ansible.builtin.user:
+        name: proxies
+        state: present
+        uid: 200
+        group: 200
+        system: true
+        create_home: false
+        home: /nonexistant
+
+    - name: Set up group for monitoring
+      become: true
+      ansible.builtin.group:
+        name: monitoring
+        state: present
+        gid: 201
+        system: true
+    - name: Set up user for monitoring
+      become: true
+      ansible.builtin.user:
+        name: monitoring
+        state: present
+        uid: 201
+        group: 201
+        system: true
+        create_home: false
+        home: /nonexistant
+
+    - name: Set up group for tabbynet
+      become: true
+      ansible.builtin.group:
+        name: tabbynet
+        state: present
+        gid: 202
+        system: true
+    - name: Set up user for tabbynet
+      become: true
+      ansible.builtin.user:
+        name: tabbynet
+        state: present
+        uid: 202
+        group: 202
+        system: true
+        create_home: false
+        home: /nonexistant
+
+    - name: Set up group for vaultwarden
+      become: true
+      ansible.builtin.group:
+        name: vaultwarden
+        state: present
+        gid: 203
+        system: true
+    - name: Set up user for vaultwarden
+      become: true
+      ansible.builtin.user:
+        name: vaultwarden
+        state: present
+        uid: 203
+        group: 203
+        system: true
+        create_home: false
+        home: /nonexistant
+
+    - name: Set up group for jellyseerr
+      become: true
+      ansible.builtin.group:
+        name: jellyseerr
+        state: present
+        gid: 204
+        system: true
+    - name: Set up user for jellyseerr
+      become: true
+      ansible.builtin.user:
+        name: jellyseerr
+        state: present
+        uid: 204
+        group: 204
+        system: true
+        create_home: false
+        home: /nonexistant
